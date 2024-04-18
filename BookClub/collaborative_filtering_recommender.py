@@ -31,11 +31,9 @@ class CollaborativeFiltering():
     
     def get_book_data(self):
         query_f = """SELECT *
-                   FROM english_books 
-                   WHERE search_title @@ plainto_tsquery('english',  '%s')
-                   AND genres LIKE '%s'
-                   LIMIT %s""" 
-        #english_books = pd.read_sql_query(query_f, db_conn)
+                   FROM english_books""" 
+        english_books = pd.read_sql_query(query_f, db_conn)
+        self.book_data = english_books
         return english_books
 
     
