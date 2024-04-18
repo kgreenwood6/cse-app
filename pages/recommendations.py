@@ -1,4 +1,5 @@
 import toml
+import random
 import requests
 import psycopg2
 import numpy as np
@@ -6,7 +7,6 @@ import streamlit as st
 from bs4 import BeautifulSoup
 from streamlit_extras.switch_page_button import switch_page
 from collaborative_filtering_recommender import CollaborativeFiltering
-import random
 
 
 # Obtain the liked book IDs and store them in a list
@@ -64,7 +64,7 @@ st.markdown(css, unsafe_allow_html=True)
 
 # Define function to get recommended book IDs from content-based filtering
 @st.cache_data
-def get_content_recommendations(book_ids, genres_arg):
+def get_content_recommendations(book_ids):
 
     # Create two empty lists to store the content-based and wildcard recs
     content_based_recs = []
@@ -83,26 +83,66 @@ def get_content_recommendations(book_ids, genres_arg):
         cluster_val = row[1]
 
         # Get the content based recs from the same genre and cluster as the liked book
-        query = """SELECT e.book_id
-                   FROM kmeans_genre_clusters k INNER JOIN english_books e
-                   ON CAST(k.book_id AS TEXT) = e.book_id
-                   WHERE k.genre = '%s' AND k.cluster = '%s' AND k.book_id != '%s'
-                   ORDER BY e.average_rating DESC, e.ratings_count DESC
-                   LIMIT 5;
-                """ % (genre_val, cluster_val, book_id)
+        #query = """SELECT e.book_id
+        #           FROM kmeans_genre_clusters k INNER JOIN english_books e
+        #           ON CAST(k.book_id AS TEXT) = e.book_id
+        #           WHERE k.genre = '%s' AND k.cluster = '%s' AND k.book_id != '%s'
+        #           ORDER BY e.average_rating DESC, e.ratings_count DESC
+        #           LIMIT 5;
+        #        """ % (genre_val, cluster_val, book_id)
+        
+        query = """ 
+            WITH get_rating AS (
+                SELECT  e.book_id,
+                        CASE WHEN average_adjusted_rating IS NULL OR ratings_count = 0 THEN
+                            average_rating
+                        ELSE
+                            (((((ratings_count-count_book_id)*1.0)/ratings_count) * average_rating * 1.0) + ((count_book_id/ratings_count) * average_adjusted_rating * 1.0))
+                        END AS avg_rating
+                FROM kmeans_genre_clusters k INNER JOIN english_books e
+                        ON CAST(k.book_id AS TEXT) = e.book_id
+                     LEFT JOIN sentiment_adjustments s 
+                        ON CAST(s.book_id AS TEXT) = e.book_id 
+                WHERE k.genre = '%s' AND k.cluster = '%s' AND k.book_id != '%s'
+                    AND e.ratings_count >= 15
+                ORDER BY e.ratings_count , 2 DESC
+                LIMIT 5)
+
+            SELECT book_id from get_rating;
+            """ % (genre_val, cluster_val, book_id)       
 
         cursor.execute(query)
         rows = cursor.fetchall()
         content_based_recs.extend(rows)
 
         # Get the wildcard rec from the same genre and cluster as the liked book
-        query = """SELECT e.book_id
-                   FROM kmeans_genre_clusters k INNER JOIN english_books e
-                   ON CAST(k.book_id AS TEXT) = e.book_id
-                   WHERE k.genre = '%s' AND k.cluster = '%s' AND k.book_id != '%s'
-                   ORDER BY e.ratings_count, e.average_rating DESC
-                   LIMIT 5;
-                """ % (genre_val, cluster_val, book_id)
+        #query = """SELECT e.book_id
+        #           FROM kmeans_genre_clusters k INNER JOIN english_books e
+        #           ON CAST(k.book_id AS TEXT) = e.book_id
+        #           WHERE k.genre = '%s' AND k.cluster = '%s' AND k.book_id != '%s'
+        #           ORDER BY e.ratings_count, e.average_rating DESC
+        #           LIMIT 5;
+        #       """ % (genre_val, cluster_val, book_id)
+
+        query = """ 
+            WITH get_rating AS (
+                SELECT  e.book_id,
+                        CASE WHEN average_adjusted_rating IS NULL OR ratings_count = 0 THEN
+                            average_rating
+                        ELSE
+                            (((((ratings_count-count_book_id)*1.0)/ratings_count) * average_rating * 1.0) + ((count_book_id/ratings_count) * average_adjusted_rating * 1.0))
+                        END AS avg_rating
+                FROM kmeans_genre_clusters k INNER JOIN english_books e
+                        ON CAST(k.book_id AS TEXT) = e.book_id
+                     LEFT JOIN sentiment_adjustments s 
+                        ON CAST(s.book_id AS TEXT) = e.book_id 
+                WHERE k.genre = '%s' AND k.cluster = '%s' AND k.book_id != '%s'
+                    AND e.ratings_count >= 15
+                ORDER BY e.ratings_count, 2 DESC
+                LIMIT 5)
+
+            SELECT book_id from get_rating;
+            """ % (genre_val, cluster_val, book_id)
 
         cursor.execute(query)
         rows = cursor.fetchall()
@@ -113,8 +153,9 @@ def get_content_recommendations(book_ids, genres_arg):
     content_based_recs = [rec[0] for rec in content_based_recs]
     wildcard_recs = [rec[0] for rec in wildcard_recs]
     content_based_recs = np.random.choice(content_based_recs, size=5, replace=False)
-    wildcard_rec = np.random.choice(wildcard_recs, size=1, replace=False)
-    return content_based_recs, wildcard_rec
+    wildcard_rec_final = np.random.choice(wildcard_recs, size=1, replace=False)
+    return content_based_recs, wildcard_rec_final
+
 
 @st.cache_data
 def initialize_collaborative_filtering():
@@ -125,10 +166,12 @@ def initialize_collaborative_filtering():
 @st.cache_data
 def calculate_recommender_matrix(cf):
     return cf.init_model()
-    
+
+
 @st.cache_data
 def load_data_for_collaborative_filtering():
     return CollaborativeFiltering()
+
 
 @st.cache_data
 def get_collaborative_recommendations():
@@ -192,8 +235,8 @@ def store_feedback(user_name_arg, feedback_1_arg, feedback_2_arg, feedback_3_arg
     conn.commit()
 
 
-# Get the book recommendations
-content_recs, wildcard_rec = get_content_recommendations(book_ids=liked_book_ids, genres_arg=genres)
+# Get the book recommendations from content based filtering and collaborative filtering
+content_recs, wildcard_rec = get_content_recommendations(book_ids=liked_book_ids)
 collaborative_recs, collaborative_wildcard_rec = get_collaborative_recommendations()
 
 use_content_wildcard = random.choice([True, False])
