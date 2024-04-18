@@ -57,7 +57,10 @@ class CollaborativeFiltering():
     def get_book_data(self):
         query_f = """SELECT *
                    FROM english_books""" 
-        english_books = pd.read_sql_query(query_f, db_conn)
+        cursor.execute(query_f)
+        rows = cursor.fetchall()
+        columns = [desc[0] for desc in cursor.description]
+        english_books = pd.DataFrame(rows, columns=columns)
         self.book_data = english_books
         return english_books
 
