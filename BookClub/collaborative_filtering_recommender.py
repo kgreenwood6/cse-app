@@ -22,7 +22,7 @@ def get_db_engine():
         # Return the database connection and cursor objects
     return db_conn, db_cursor
     
-    conn, cursor = get_db_engine()
+conn, cursor = get_db_engine()
     
 class CollaborativeFiltering():
     def __init__(self, book_data=None, interactions_data=None):
@@ -50,12 +50,12 @@ class CollaborativeFiltering():
     
     
     def get_book_data(self):
-        query_f = pd.read_sql_query ("""SELECT *
+        query_f = """SELECT *
                    FROM english_books 
                    WHERE search_title @@ plainto_tsquery('english',  '%s')
                    AND genres LIKE '%s'
-                   LIMIT %s""" , conn)
-        english_books = pd.DataFrame(sql_query)
+                   LIMIT %s""" 
+        english_books = pd.read_sql_query(query_f, conn)
         return english_books
 
     
