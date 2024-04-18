@@ -55,7 +55,7 @@ class CollaborativeFiltering():
     
     
     def get_book_data(self):
-        query_f = """SELECT *
+        query_f = """SELECT book_id
                    FROM english_books""" 
         cursor.execute(query_f)
         rows = cursor.fetchall()
