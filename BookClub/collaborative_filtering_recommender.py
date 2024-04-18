@@ -25,9 +25,18 @@ class CollaborativeFiltering():
         self.n_iter = 5
         self.random_state = 42
         self.all_recommendations = []
+        
+    conn, cursor = get_db_engine()
     
     def get_book_data(self):
-        return pd.read_csv("./data/english-books.csv")
+        query_f = pd.read_sql_query ("""SELECT *
+                   FROM english_books 
+                   WHERE search_title @@ plainto_tsquery('english',  '%s')
+                   AND genres LIKE '%s'
+                   LIMIT %s""" , conn)
+        english-books = pd.DataFrame(sql_query)
+        return english-books
+
     
     def get_interactions_data(self):
         return pd.read_csv("./data/interactions_with_adjusted_ratings.csv", engine='python', delimiter=',', encoding='latin1')
