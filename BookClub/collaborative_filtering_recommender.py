@@ -3,26 +3,6 @@ import numpy as np
 from scipy.sparse import csr_matrix
 from sklearn.utils.extmath import randomized_svd
 
-def get_db_engine():
-    # Load the TOML file
-    db_config = toml.load("secrets.toml")
-
-    # Connect to Postgres DB using info from TOML file
-    db_conn = psycopg2.connect(
-        host=db_config['database']['host'],
-        port=db_config['database']['port'],
-        dbname=db_config['database']['name'],
-        user=db_config['database']['user'],
-        password=db_config['database']['password']
-    )
-
-        # Get the cursor object
-    db_cursor = db_conn.cursor()
-
-        # Return the database connection and cursor objects
-    return db_conn, db_cursor
-    
-conn, cursor = get_db_engine()
     
 class CollaborativeFiltering():
     def __init__(self, book_data=None, interactions_data=None):
