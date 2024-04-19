@@ -74,8 +74,7 @@ class CollaborativeFiltering():
         rows2 = cursor.fetchall()
         columns2 = [desc[0] for desc in cursor.description]
         interactions_data = pd.DataFrame(rows2, columns=columns2)
-        self.interactions_data = interactions_data
-        return english_books
+        return interactions_data
         #return pd.read_csv("./data/interactions_with_adjusted_ratings.csv", engine='python', delimiter=',', encoding='latin1')
 
 
