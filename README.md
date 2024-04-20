@@ -1,5 +1,6 @@
 ## *Book Club* Recommendation System 📖
 
+<img src="BookClub/iStock-498888964.jpg" width="400" height="300" align="right" width="200" alt="Floating Image">
 ### Description
 The Book Club application will assist users in finding their next read by implementing a hybrid recommendation system which incorporates sentimental analysis for recommendations that tend away from the highly rated and predictable choices. Users can also look forward to a 'Wild Card' recommendation that suggests a book based on genre selection rather than personalisation which provides a greater variety in a user's bookshelf. 
 
