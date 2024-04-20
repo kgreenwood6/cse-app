@@ -29,3 +29,8 @@ Once inside the Book Club directory, run the command `streamlit run welcome_page
 recommendation streamlit app within your default web browser.
 2. Follow the instructions within the app to receive recommendations from the app. Once recommendations have been received,
 provide feedback for each recommendation by clicking either 👍 or 👎 next to each recommendation.
+
+
+<p align="center">
+  <img src="BookClub/iStock-1030308064.jpg" width="300" height="200" alt="Centered Image">
+</p>
